@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexLead — Find Any Business Email Instantly</title>
+<meta name="description" content="NexLead searches 200+ sources simultaneously to find verified business emails. The most aggressive email finder ever built.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080b12;--surface:#0d1117;--card:#121820;--border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.1);--accent:#e8ff47;--accent2:#c8df20;
+  --blue:#4f9eff;--green:#00e87b;--red:#ff4757;--amber:#f5a623;
+  --text:#eef0f5;--muted:#5a6070;--subtle:#1a2030;
+  --mono:'JetBrains Mono',monospace;--display:'Bebas Neue',sans-serif;--sans:'Outfit',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+
+/* Noise texture overlay */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+
+/* Views */
+.view{display:none;position:relative;z-index:1}
+.view.active{display:block}
+
+/* ── LANDING ── */
+.land-nav{display:flex;align-items:center;justify-content:space-between;padding:24px 48px;border-bottom:1px solid var(--border)}
+.logo-mark{font-family:var(--display);font-size:26px;letter-spacing:0.05em;color:var(--text)}
+.logo-mark span{color:var(--accent)}
+.nav-links{display:flex;align-items:center;gap:32px}
+.nav-link{font-size:14px;color:var(--muted);text-decoration:none;transition:color .2s}
+.nav-link:hover{color:var(--text)}
+.btn-nav{padding:9px 22px;background:var(--accent);color:#000;font-weight:600;font-size:13px;border:none;border-radius:3px;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn-nav:hover{background:#fff;transform:translateY(-1px)}
+
+.hero{min-height:90vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(232,255,71,0.05) 0%,transparent 70%);pointer-events:none}
+.hero-tag{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:28px;display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(232,255,71,0.2);padding:6px 14px;border-radius:2px}
+.hero-tag::before{content:'';width:6px;height:6px;background:var(--accent);border-radius:50%;animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+h1.hero-title{font-family:var(--display);font-size:clamp(60px,9vw,120px);line-height:.95;letter-spacing:0.02em;color:var(--text);margin-bottom:28px}
+h1.hero-title em{color:var(--accent);font-style:normal;display:block}
+.hero-sub{font-size:18px;color:var(--muted);max-width:520px;line-height:1.7;margin-bottom:48px;font-weight:300}
+.hero-ctas{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.btn-primary{padding:16px 36px;background:var(--accent);color:#000;font-weight:700;font-size:15px;border:none;border-radius:3px;cursor:pointer;transition:all .2s}
+.btn-primary:hover{background:#fff;transform:translateY(-2px)}
+.btn-ghost{padding:16px 36px;background:transparent;color:var(--text);font-weight:500;font-size:15px;border:1px solid var(--border2);border-radius:3px;cursor:pointer;transition:all .2s}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+.stats-row{display:flex;gap:48px;justify-content:center;padding:60px 24px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.stat-item{text-align:center}
+.stat-num{font-family:var(--display);font-size:52px;color:var(--accent);letter-spacing:.02em}
+.stat-label{font-size:13px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.08em}
+
+.sources-section{padding:80px 48px;max-width:1100px;margin:0 auto}
+.section-label{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:16px}
+.section-title{font-family:var(--display);font-size:clamp(36px,5vw,64px);line-height:1;margin-bottom:48px}
+.sources-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.source-chip{padding:10px 16px;background:var(--card);border:1px solid var(--border);border-radius:3px;font-size:12px;font-family:var(--mono);color:var(--muted);display:flex;align-items:center;gap:8px;transition:all .2s}
+.source-chip:hover{border-color:var(--accent);color:var(--accent)}
+.source-chip::before{content:'';width:5px;height:5px;background:var(--green);border-radius:50%;flex-shrink:0}
+
+.pricing-section{padding:80px 48px;max-width:1100px;margin:0 auto}
+.plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:48px}
+@media(max-width:768px){.plans-grid{grid-template-columns:1fr}.stats-row{gap:24px}.land-nav{padding:20px 24px}}
+.plan-card{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:32px;position:relative;transition:border-color .2s}
+.plan-card.featured{border-color:var(--accent)}
+.plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:4px 12px;border-radius:2px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.plan-name{font-family:var(--display);font-size:28px;letter-spacing:.05em;margin-bottom:8px}
+.plan-price{font-family:var(--mono);font-size:36px;font-weight:700;color:var(--accent);margin-bottom:4px}
+.plan-price span{font-size:14px;color:var(--muted);font-weight:400}
+.plan-credits{font-size:13px;color:var(--muted);margin-bottom:24px}
+.plan-features{list-style:none;margin-bottom:28px}
+.plan-features li{font-size:13px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.plan-features li::before{content:'✓';color:var(--green);font-weight:700}
+.btn-plan{width:100%;padding:13px;background:transparent;border:1px solid var(--border2);color:var(--text);font-family:var(--sans);font-weight:600;font-size:14px;border-radius:3px;cursor:pointer;transition:all .2s}
+.plan-card.featured .btn-plan{background:var(--accent);color:#000;border-color:var(--accent)}
+.btn-plan:hover{border-color:var(--accent);color:var(--accent)}
+.plan-card.featured .btn-plan:hover{background:#fff}
+
+.land-footer{padding:40px 48px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+
+/* ── AUTH ── */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.auth-card{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:48px;width:100%;max-width:420px}
+.auth-logo{font-family:var(--display);font-size:28px;letter-spacing:.05em;margin-bottom:8px}
+.auth-logo span{color:var(--accent)}
+.auth-sub{font-size:14px;color:var(--muted);margin-bottom:32px}
+.form-group{margin-bottom:20px}
+.form-label{display:block;font-size:12px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.form-input{width:100%;padding:12px 14px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:14px;border-radius:3px;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--muted)}
+.btn-submit{width:100%;padding:14px;background:var(--accent);color:#000;font-weight:700;font-size:14px;border:none;border-radius:3px;cursor:pointer;transition:all .2s;margin-top:8px}
+.btn-submit:hover{background:#fff}
+.btn-submit:disabled{background:var(--subtle);color:var(--muted);cursor:not-allowed}
+.auth-switch{text-align:center;margin-top:24px;font-size:13px;color:var(--muted)}
+.auth-switch a{color:var(--accent);cursor:pointer;text-decoration:none}
+.form-error{background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);color:var(--red);font-size:13px;padding:10px 14px;border-radius:3px;margin-bottom:16px;display:none}
+.form-error.show{display:block}
+.free-badge{background:rgba(232,255,71,0.08);border:1px solid rgba(232,255,71,0.2);color:var(--accent);font-size:12px;padding:8px 14px;border-radius:3px;text-align:center;margin-bottom:24px;font-family:var(--mono)}
+
+/* ── DASHBOARD ── */
+.dash-layout{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);padding:24px 0;flex-shrink:0;display:flex;flex-direction:column}
+.sidebar-logo{font-family:var(--display);font-size:22px;letter-spacing:.05em;padding:0 20px 24px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.sidebar-logo span{color:var(--accent)}
+.sidebar-nav{flex:1}
+.sidebar-link{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .2s;border-left:2px solid transparent}
+.sidebar-link:hover,.sidebar-link.active{color:var(--text);background:rgba(255,255,255,0.03);border-left-color:var(--accent)}
+.sidebar-link svg{width:15px;height:15px;flex-shrink:0}
+.sidebar-bottom{padding:20px;border-top:1px solid var(--border)}
+.credit-box{background:var(--card);border:1px solid var(--border);border-radius:3px;padding:14px}
+.credit-num{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--accent)}
+.credit-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.btn-topup{width:100%;padding:8px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-size:12px;font-weight:600;border-radius:2px;cursor:pointer;margin-top:10px;transition:all .2s}
+.btn-topup:hover{background:var(--accent);color:#000}
+
+.dash-main{flex:1;overflow-y:auto}
+.dash-page{display:none;padding:36px}
+.dash-page.active{display:block}
+.dash-page-title{font-family:var(--display);font-size:42px;letter-spacing:.02em;margin-bottom:4px}
+.dash-page-sub{font-size:14px;color:var(--muted);margin-bottom:32px}
+
+/* Upload zone */
+.upload-zone{border:2px dashed var(--border2);border-radius:4px;padding:56px 24px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(232,255,71,0.02)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{width:52px;height:52px;background:var(--subtle);border-radius:3px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--muted)}
+.upload-title{font-size:16px;font-weight:500;margin-bottom:6px}
+.upload-hint{font-size:13px;color:var(--muted)}
+.file-pill{display:none;align-items:center;gap:10px;padding:10px 16px;background:rgba(0,232,123,0.06);border:1px solid rgba(0,232,123,0.2);border-radius:3px;margin-top:16px;font-size:13px;font-family:var(--mono);color:var(--green)}
+.file-pill.show{display:flex}
+
+.config-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)}
+.config-label{font-size:14px;color:var(--text)}
+.config-hint{font-size:11px;color:var(--muted);margin-top:2px}
+.range-group{display:flex;align-items:center;gap:10px}
+input[type=range]{-webkit-appearance:none;width:100px;height:3px;background:var(--subtle);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer}
+.range-val{font-family:var(--mono);font-size:12px;color:var(--accent);min-width:16px}
+
+.btn-run{padding:14px 32px;background:var(--accent);color:#000;font-weight:700;font-size:14px;border:none;border-radius:3px;cursor:pointer;transition:all .2s;margin-top:24px}
+.btn-run:hover{background:#fff;transform:translateY(-1px)}
+.btn-run:disabled{background:var(--subtle);color:var(--muted);cursor:not-allowed;transform:none}
+
+/* Progress */
+.prog-panel{display:none;background:var(--card);border:1px solid var(--border);border-radius:4px;padding:24px;margin-top:20px}
+.prog-panel.show{display:block}
+.prog-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+.pstat{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:14px;text-align:center}
+.pstat-val{font-family:var(--mono);font-size:24px;font-weight:700}
+.pstat-val.y{color:var(--accent)}.pstat-val.g{color:var(--green)}.pstat-val.w{color:var(--text)}
+.pstat-key{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+.prog-bar-wrap{background:var(--subtle);border-radius:2px;height:4px;margin-bottom:16px;overflow:hidden}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--accent),#aaff00);border-radius:2px;width:0%;transition:width .4s;box-shadow:0 0 8px rgba(232,255,71,.4)}
+.live-feed{background:var(--surface);border:1px solid var(--border);border-radius:3px;height:180px;overflow-y:auto;padding:10px;font-family:var(--mono);font-size:11px}
+.feed-line{display:flex;gap:10px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03);animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+.feed-icon{flex-shrink:0}.feed-name{flex:1;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.feed-email{color:var(--accent)}.feed-none{color:var(--red);opacity:.6}
+
+/* Results */
+.results-panel{display:none;margin-top:24px}
+.results-panel.show{display:block}
+.results-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+.results-count{font-size:14px;color:var(--muted)}
+.results-count strong{color:var(--accent)}
+.btn-dl{padding:10px 20px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:2px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;text-decoration:none}
+.btn-dl:hover{background:rgba(232,255,71,.08)}
+.search-bar{width:100%;padding:10px 14px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:13px;border-radius:3px;outline:none;margin-bottom:12px;transition:border-color .2s;font-family:var(--sans)}
+.search-bar:focus{border-color:var(--accent)}
+.search-bar::placeholder{color:var(--muted)}
+.filter-row{display:flex;gap:8px;margin-bottom:14px}
+.fbtn{padding:6px 14px;background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;border-radius:2px;cursor:pointer;transition:all .15s}
+.fbtn:hover,.fbtn.on{border-color:var(--accent);color:var(--accent);background:rgba(232,255,71,.05)}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:3px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead{background:var(--surface);position:sticky;top:0;z-index:2}
+th{text-align:left;padding:10px 14px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.015)}
+.tag{display:inline-block;padding:2px 8px;border-radius:2px;font-family:var(--mono);font-size:10px;font-weight:700}
+.tag-y{background:rgba(232,255,71,.1);color:var(--accent)}
+.tag-n{background:rgba(255,71,87,.1);color:var(--red)}
+.email-td{font-family:var(--mono);font-size:11px;color:var(--accent)}
+
+/* Pricing page */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+@media(max-width:768px){.pricing-grid{grid-template-columns:1fr}.dash-layout{flex-direction:column}.sidebar{width:100%;flex-direction:row;padding:16px}}
+
+/* Toasts */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);border-radius:3px;padding:14px 20px;font-size:13px;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:var(--green);color:var(--green)}
+.toast.error{border-color:var(--red);color:var(--red)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--subtle);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- ── LANDING VIEW ── -->
+<div id="view-landing" class="view active">
+  <nav class="land-nav">
+    <div class="logo-mark">Nex<span>Lead</span></div>
+    <div class="nav-links">
+      <a href="#pricing" class="nav-link">Pricing</a>
+      <a href="#sources" class="nav-link">Sources</a>
+      <button class="btn-nav" onclick="showView('login')">Sign In</button>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-tag">200+ sources per business</div>
+    <h1 class="hero-title">Find Any<em>Business Email.</em></h1>
+    <p class="hero-sub">Upload your lead list. NexLead hunts across websites, 150+ directories, Facebook, Instagram, LinkedIn and more — simultaneously. Stops the instant it finds an email.</p>
+    <div class="hero-ctas">
+      <button class="btn-primary" onclick="showView('signup')">Start Free — 10 searches</button>
+      <button class="btn-ghost" onclick="showView('login')">Sign In</button>
+    </div>
+  </section>
+
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-num">200+</div><div class="stat-label">Sources Searched</div></div>
+    <div class="stat-item"><div class="stat-num">10x</div><div class="stat-label">Faster Than Competitors</div></div>
+    <div class="stat-item"><div class="stat-num">FREE</div><div class="stat-label">10 Searches To Start</div></div>
+    <div class="stat-item"><div class="stat-num">₹999</div><div class="stat-label">Starting Price</div></div>
+  </div>
+
+  <section class="sources-section" id="sources">
+    <div class="section-label">Where we search</div>
+    <div class="section-title">Every place. All at once.</div>
+    <div class="sources-grid" id="sources-grid"></div>
+  </section>
+
+  <section class="pricing-section" id="pricing">
+    <div class="section-label">Pricing</div>
+    <div class="section-title">Pay as you grow.</div>
+    <div class="plans-grid">
+      <div class="plan-card">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">₹999 <span>one-time</span></div>
+        <div class="plan-credits">200 email searches</div>
+        <ul class="plan-features">
+          <li>200+ sources per business</li><li>Parallel search engine</li>
+          <li>CSV export</li><li>Email support</li>
+        </ul>
+        <button class="btn-plan" onclick="showView('signup')">Get Started</button>
+      </div>
+      <div class="plan-card featured">
+        <div class="plan-badge">Most Popular</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">₹2,999 <span>one-time</span></div>
+        <div class="plan-credits">1,000 email searches</div>
+        <ul class="plan-features">
+          <li>Everything in Starter</li><li>Priority processing</li>
+          <li>Bulk upload</li><li>API access (coming soon)</li>
+        </ul>
+        <button class="btn-plan" onclick="showView('signup')">Get Pro</button>
+      </div>
+      <div class="plan-card">
+        <div class="plan-name">Agency</div>
+        <div class="plan-price">₹6,999 <span>one-time</span></div>
+        <div class="plan-credits">5,000 email searches</div>
+        <ul class="plan-features">
+          <li>Everything in Pro</li><li>White-label ready</li>
+          <li>Dedicated support</li><li>Custom integrations</li>
+        </ul>
+        <button class="btn-plan" onclick="showView('signup')">Get Agency</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="land-footer">
+    <span>© 2026 NexLead. Built by SolvAI Labs.</span>
+    <span>solvailabs.com</span>
+  </footer>
+</div>
+
+<!-- ── LOGIN VIEW ── -->
+<div id="view-login" class="view">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">Nex<span>Lead</span></div>
+      <div class="auth-sub">Sign in to your account</div>
+      <div class="form-error" id="login-error"></div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="login-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn-submit" id="login-btn" onclick="doLogin()">Sign In</button>
+      <div class="auth-switch">Don't have an account? <a onclick="showView('signup')">Sign up free</a></div>
+      <div class="auth-switch" style="margin-top:8px"><a onclick="showView('landing')">← Back to home</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SIGNUP VIEW ── -->
+<div id="view-signup" class="view">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">Nex<span>Lead</span></div>
+      <div class="auth-sub">Create your free account</div>
+      <div class="free-badge">🎁 10 free searches on signup — no card needed</div>
+      <div class="form-error" id="signup-error"></div>
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" class="form-input" id="signup-name" placeholder="Ritik Barnwal">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="signup-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="signup-password" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')doSignup()">
+      </div>
+      <button class="btn-submit" id="signup-btn" onclick="doSignup()">Create Account</button>
+      <div class="auth-switch">Already have an account? <a onclick="showView('login')">Sign in</a></div>
+      <div class="auth-switch" style="margin-top:8px"><a onclick="showView('landing')">← Back to home</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── DASHBOARD VIEW ── -->
+<div id="view-dashboard" class="view">
+  <div class="dash-layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-logo">Nex<span>Lead</span></div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-link active" onclick="showDashPage('hunt')" data-page="hunt">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Hunt Emails
+        </div>
+        <div class="sidebar-link" onclick="showDashPage('pricing')" data-page="pricing">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Top Up Credits
+        </div>
+        <div class="sidebar-link" onclick="doLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign Out
+        </div>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="credit-box">
+          <div class="credit-label">Credits</div>
+          <div class="credit-num" id="sidebar-credits">0</div>
+          <button class="btn-topup" onclick="showDashPage('pricing')">Top Up →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="dash-main">
+
+      <!-- Hunt Page -->
+      <div class="dash-page active" id="page-hunt">
+        <div class="dash-page-title">Hunt Emails</div>
+        <div class="dash-page-sub">Upload your Outscraper CSV/Excel. We'll find emails from 200+ sources in parallel.</div>
+
+        <div class="upload-zone" id="drop-zone">
+          <input type="file" id="file-input" accept=".csv,.xlsx,.xls">
+          <div class="upload-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div class="upload-title">Drop your file here</div>
+          <div class="upload-hint">CSV or Excel (.xlsx) from Outscraper</div>
+        </div>
+        <div class="file-pill" id="file-pill">
+          <span>✓</span>
+          <span id="file-pill-name">file.xlsx</span>
+        </div>
+
+        <div style="margin-top:20px">
+          <div class="config-row">
+            <div><div class="config-label">Parallel workers</div><div class="config-hint">More = faster, may trigger rate limits</div></div>
+            <div class="range-group">
+              <input type="range" id="workers" min="1" max="5" value="3" oninput="document.getElementById('workers-val').textContent=this.value">
+              <span class="range-val" id="workers-val">3</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-run" id="run-btn" onclick="startHunt()" disabled>▶ Start Hunt</button>
+
+        <!-- Progress -->
+        <div class="prog-panel" id="prog-panel">
+          <div class="prog-stats">
+            <div class="pstat"><div class="pstat-val w" id="p-scanned">0</div><div class="pstat-key">Scanned</div></div>
+            <div class="pstat"><div class="pstat-val g" id="p-found">0</div><div class="pstat-key">Emails Found</div></div>
+            <div class="pstat"><div class="pstat-val y" id="p-pct">0%</div><div class="pstat-key">Complete</div></div>
+          </div>
+          <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar"></div></div>
+          <div class="live-feed" id="live-feed"><div style="color:var(--muted)">Waiting for results...</div></div>
+        </div>
+
+        <!-- Results -->
+        <div class="results-panel" id="results-panel">
+          <div class="results-top">
+            <div class="results-count" id="res-count">—</div>
+            <button class="btn-dl" onclick="downloadResults()">⬇ Download CSV</button>
+          </div>
+          <input class="search-bar" id="search-bar" placeholder="Search name, email, city..." oninput="renderTable()">
+          <div class="filter-row">
+            <button class="fbtn on" onclick="setFilter('all',this)">All</button>
+            <button class="fbtn" onclick="setFilter('yes',this)">Email Found</button>
+            <button class="fbtn" onclick="setFilter('no',this)">No Email</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Business</th><th>Category</th><th>Email</th><th>Source</th>
+                <th>Phone</th><th>Rating</th><th>City</th><th>Status</th>
+              </tr></thead>
+              <tbody id="table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing Page -->
+      <div class="dash-page" id="page-pricing">
+        <div class="dash-page-title">Top Up Credits</div>
+        <div class="dash-page-sub">Each credit = 1 business searched across 200+ sources.</div>
+        <div class="pricing-grid">
+          <div class="plan-card">
+            <div class="plan-name">Starter</div>
+            <div class="plan-price">₹999</div>
+            <div class="plan-credits">200 searches</div>
+            <ul class="plan-features">
+              <li>200+ sources per business</li><li>Parallel engine</li><li>CSV export</li>
+            </ul>
+            <button class="btn-plan" onclick="buyPlan('starter')">Buy Starter</button>
+          </div>
+          <div class="plan-card featured">
+            <div class="plan-badge">Best Value</div>
+            <div class="plan-name">Pro</div>
+            <div class="plan-price">₹2,999</div>
+            <div class="plan-credits">1,000 searches</div>
+            <ul class="plan-features">
+              <li>Everything in Starter</li><li>Priority processing</li><li>Bulk upload</li>
+            </ul>
+            <button class="btn-plan" onclick="buyPlan('pro')">Buy Pro</button>
+          </div>
+          <div class="plan-card">
+            <div class="plan-name">Agency</div>
+            <div class="plan-price">₹6,999</div>
+            <div class="plan-credits">5,000 searches</div>
+            <ul class="plan-features">
+              <li>Everything in Pro</li><li>White-label ready</li><li>Priority support</li>
+            </ul>
+            <button class="btn-plan" onclick="buyPlan('agency')">Buy Agency</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let token = localStorage.getItem('nl_token') || '';
+let currentUser = null;
+let currentJobId = null;
+let allResults = [];
+let activeFilter = 'all';
+let pollTimer = null;
+
+// ── Sources list ─────────────────────────────────────────────────────────────
+const SOURCES = [
+  'Business Website','Google Search','Facebook','Instagram','Twitter/X','LinkedIn',
+  'YouTube','TikTok','Yelp','Yellow Pages','BBB','Manta','Alignable','Hotfrog',
+  'Superpages','Merchant Circle','Local.com','411.com','ShowMeLocal','2FindLocal',
+  'Opendi','Cylex','FindUsLocal','GoLocal247','Fyple','TripAdvisor','Foursquare',
+  'Trustpilot','Glassdoor','Angi','HomeAdvisor','Thumbtack','Porch','Bark',
+  'Healthgrades','Zocdoc','Vitals','WebMD','Psychology Today','Booksy','Vagaro',
+  'Fresha','StyleSeat','OpenTable','Zomato','GrubHub','DoorDash','Mindbody',
+  'ClassPass','Calendly','Square','Eventbrite','Linktree','Beacons.ai','Rover',
+  'Wyzant','Etsy','Craigslist','Booking.com','PRNewswire','Phone Lookup',
+  'Google Maps Profile','Reddit','Pinterest','Nextdoor','Thumbtack','Care.com',
+];
+document.getElementById('sources-grid').innerHTML = SOURCES.map(s =>
+  `<div class="source-chip">${s}</div>`).join('');
+
+// ── View management ───────────────────────────────────────────────────────────
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showDashPage(p) {
+  document.querySelectorAll('.dash-page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + p).classList.add('active');
+  document.querySelector(`.sidebar-link[data-page="${p}"]`)?.classList.add('active');
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── API helper ────────────────────────────────────────────────────────────────
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch('/api' + path, opts);
+  return r.json();
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-error');
+  err.classList.remove('show');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  const res = await api('POST', '/login', {email, password});
+  btn.disabled = false; btn.textContent = 'Sign In';
+  if (res.error) { err.textContent = res.error; err.classList.add('show'); return; }
+  token = res.token;
+  currentUser = res.user;
+  localStorage.setItem('nl_token', token);
+  enterDashboard();
+}
+
+async function doSignup() {
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const btn = document.getElementById('signup-btn');
+  const err = document.getElementById('signup-error');
+  err.classList.remove('show');
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  const res = await api('POST', '/signup', {name, email, password});
+  btn.disabled = false; btn.textContent = 'Create Account';
+  if (res.error) { err.textContent = res.error; err.classList.add('show'); return; }
+  token = res.token;
+  currentUser = res.user;
+  localStorage.setItem('nl_token', token);
+  toast('Welcome to NexLead! You have 10 free credits 🎉');
+  enterDashboard();
+}
+
+function doLogout() {
+  token = ''; currentUser = null;
+  localStorage.removeItem('nl_token');
+  showView('landing');
+}
+
+function enterDashboard() {
+  document.getElementById('sidebar-credits').textContent = currentUser.credits;
+  showView('dashboard');
+  showDashPage('hunt');
+}
+
+// ── Auto-login on load ────────────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  if (token) {
+    const res = await api('GET', '/me');
+    if (res.email) {
+      currentUser = res;
+      enterDashboard();
+    } else {
+      token = '';
+      localStorage.removeItem('nl_token');
+    }
+  }
+});
+
+// ── File upload ───────────────────────────────────────────────────────────────
+const fileInput = document.getElementById('file-input');
+const dropZone = document.getElementById('drop-zone');
+
+fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) { fileInput.files = e.dataTransfer.files; handleFile(f); }
+});
+
+function handleFile(file) {
+  if (!file) return;
+  document.getElementById('file-pill-name').textContent = file.name;
+  document.getElementById('file-pill').classList.add('show');
+  document.getElementById('run-btn').disabled = false;
+}
+
+// ── Start hunt ────────────────────────────────────────────────────────────────
+async function startHunt() {
+  const file = fileInput.files[0];
+  if (!file) return;
+  if (!currentUser || currentUser.credits < 1) {
+    toast('No credits left! Please top up.', 'error');
+    showDashPage('pricing');
+    return;
+  }
+  const workers = document.getElementById('workers').value;
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true; btn.textContent = '⟳ Starting...';
+
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('workers', workers);
+
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    headers: {'Authorization': 'Bearer ' + token},
+    body: fd,
+  }).then(r => r.json());
+
+  if (res.error) { toast(res.error, 'error'); btn.disabled = false; btn.textContent = '▶ Start Hunt'; return; }
+
+  currentJobId = res.job_id;
+  allResults = [];
+  document.getElementById('prog-panel').classList.add('show');
+  document.getElementById('results-panel').classList.remove('show');
+  document.getElementById('live-feed').innerHTML = '';
+  btn.textContent = '⟳ Hunting...';
+  pollTimer = setInterval(pollStatus, 1500);
+}
+
+// ── Poll ──────────────────────────────────────────────────────────────────────
+async function pollStatus() {
+  if (!currentJobId) return;
+  const data = await fetch(`/api/status/${currentJobId}`, {
+    headers: {'Authorization': 'Bearer ' + token}
+  }).then(r => r.json());
+
+  document.getElementById('p-scanned').textContent = data.processed;
+  document.getElementById('p-found').textContent = data.found;
+  document.getElementById('p-pct').textContent = data.percent + '%';
+  document.getElementById('prog-bar').style.width = data.percent + '%';
+
+  const feed = document.getElementById('live-feed');
+  if (data.recent?.length) {
+    if (feed.dataset.last != data.processed) {
+      feed.dataset.last = data.processed;
+      data.recent.slice(0,3).forEach(r => {
+        const line = document.createElement('div');
+        line.className = 'feed-line';
+        line.innerHTML = `
+          <span class="feed-icon" style="color:${r.email?'var(--accent)':'var(--red)'}">${r.email?'✓':'✗'}</span>
+          <span class="feed-name">${r.business_name||'—'}</span>
+          ${r.email ? `<span class="feed-email">${r.email}</span>` : `<span class="feed-none">not found</span>`}
+        `;
+        feed.insertBefore(line, feed.firstChild);
+      });
+    }
+  }
+
+  if (data.status === 'done') {
+    clearInterval(pollTimer);
+    allResults = data.recent || [];
+    // Refresh full results via another status call to get all
+    fetchAllAndRender(data);
+  } else if (data.status === 'error') {
+    clearInterval(pollTimer);
+    toast('Error: ' + data.error, 'error');
+    document.getElementById('run-btn').disabled = false;
+    document.getElementById('run-btn').textContent = '▶ Start Hunt';
+  }
+}
+
+async function fetchAllAndRender(data) {
+  document.getElementById('run-btn').disabled = false;
+  document.getElementById('run-btn').textContent = '▶ Run Again';
+  document.getElementById('results-panel').classList.add('show');
+  document.getElementById('res-count').innerHTML =
+    `Processed <strong>${data.processed}</strong> businesses — <strong>${data.found}</strong> emails found`;
+  allResults = data.recent || [];
+  renderTable();
+  // Refresh credits
+  const me = await api('GET', '/me');
+  if (me.credits !== undefined) {
+    currentUser.credits = me.credits;
+    document.getElementById('sidebar-credits').textContent = me.credits;
+  }
+  document.getElementById('results-panel').scrollIntoView({behavior:'smooth'});
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+function renderTable() {
+  const q = document.getElementById('search-bar').value.toLowerCase();
+  let rows = [...allResults];
+  if (activeFilter === 'yes') rows = rows.filter(r => r.email_found === 'Yes');
+  if (activeFilter === 'no')  rows = rows.filter(r => r.email_found === 'No');
+  if (q) rows = rows.filter(r =>
+    (r.business_name||'').toLowerCase().includes(q) ||
+    (r.email||'').toLowerCase().includes(q) ||
+    (r.city||'').toLowerCase().includes(q));
+
+  const srcColors = {website:'#e8ff47',google:'#4f9eff',google_crawl:'#4f9eff',
+    directory:'#00e87b',social_media:'#e1306c',phone_search:'#f5a623'};
+  document.getElementById('table-body').innerHTML = rows.length
+    ? rows.map(r => `
+      <tr>
+        <td style="font-weight:500" title="${r.business_name||''}">${r.business_name||'—'}</td>
+        <td style="color:var(--muted);font-size:11px">${r.category||'—'}</td>
+        <td class="email-td" title="${r.email||''}">${r.email||'—'}</td>
+        <td><span style="font-family:var(--mono);font-size:10px;color:${srcColors[r.email_source]||'var(--muted)'}">${r.email_source||'—'}</span></td>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${r.phone||'—'}</td>
+        <td style="color:var(--amber)">${r.rating?'★ '+r.rating:'—'}</td>
+        <td style="color:var(--muted)">${r.city||'—'}</td>
+        <td><span class="tag ${r.email_found==='Yes'?'tag-y':'tag-n'}">${r.email_found||'No'}</span></td>
+      </tr>`).join('')
+    : `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted)">No results match</td></tr>`;
+}
+
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderTable();
+}
+
+function downloadResults() {
+  if (currentJobId) window.location.href = `/api/download/${currentJobId}`;
+}
+
+// ── Payment ───────────────────────────────────────────────────────────────────
+async function buyPlan(plan) {
+  const res = await api('POST', '/create-order', {plan});
+  if (res.error) { toast(res.error, 'error'); return; }
+  if (res.demo) {
+    // Demo mode (no Razorpay keys)
+    const verify = await api('POST', '/verify-payment', {plan, demo: true});
+    if (verify.success) {
+      currentUser.credits = verify.credits;
+      document.getElementById('sidebar-credits').textContent = verify.credits;
+      toast(`✅ ${PLANS[plan]} credits added! (Demo mode)`);
+      showDashPage('hunt');
+    }
+    return;
+  }
+  // Real Razorpay checkout
+  const options = {
+    key: res.key, amount: res.amount * 100, currency: 'INR',
+    name: 'NexLead', description: plan + ' plan',
+    order_id: res.order_id,
+    handler: async function(response) {
+      const verify = await api('POST', '/verify-payment', {...response, plan});
+      if (verify.success) {
+        currentUser.credits = verify.credits;
+        document.getElementById('sidebar-credits').textContent = verify.credits;
+        toast('Payment successful! Credits added.');
+        showDashPage('hunt');
+      }
+    },
+    prefill: {email: currentUser.email, name: currentUser.name},
+    theme: {color: '#e8ff47'},
+  };
+  const rzp = new Razorpay(options);
+  rzp.open();
+}
+
+const PLANS = {starter:'200', pro:'1,000', agency:'5,000'};
+</script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</body>
+</html>
